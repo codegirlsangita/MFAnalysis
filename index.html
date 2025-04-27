@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MFAnalysis - Compare & Analyze Indian Mutual Funds | Real-time NAV Data</title>
+    <meta name="description" content="Compare and analyze Indian mutual funds with real-time NAV data, performance metrics, and interactive charts. Make informed investment decisions with MFAnalysis.">
+    <meta name="keywords" content="mutual fund, Indian mutual funds, NAV, fund analysis, investment, compare mutual funds, fund performance">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Navbar -->
+    <nav class="bg-indigo-600 text-white shadow-lg">
+        <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+            <a href="index.html" class="flex items-center space-x-2">
+                <i class="fas fa-chart-line text-2xl"></i>
+                <span class="text-xl font-bold">MFAnalysis</span>
+            </a>
+            <div class="hidden md:flex space-x-6">
+                <a href="#" class="hover:text-indigo-200 transition">Dashboard</a>
+                <a href="#compare-section" class="hover:text-indigo-200 transition">Compare</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <header class="bg-gradient-to-r from-indigo-600 to-blue-500 text-white py-16">
+        <div class="container mx-auto px-4 text-center">
+            <h1 class="text-4xl md:text-5xl font-bold mb-4">Smart Mutual Fund Analysis</h1>
+            <p class="text-xl mb-8 max-w-2xl mx-auto">Get real-time insights, compare performance, and make informed investment decisions.</p>
+            <div class="mx-auto max-w-xl relative">
+                <div class="relative">
+                    <input type="text" id="search-input" class="w-full px-5 py-3 rounded-full shadow-md text-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-300" placeholder="Search for a mutual fund...">
+                    <button id="search-button" class="absolute right-1 top-1 bg-indigo-600 text-white p-2 rounded-full hover:bg-indigo-700 transition">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </div>
+                <div id="autocomplete-results" class="absolute w-full bg-white mt-1 rounded-lg shadow-lg max-h-60 overflow-y-auto z-10 hidden"></div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-4 py-8">
+        <!-- Fund Results Section -->
+        <section id="fund-results" class="hidden my-8">
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <div class="animate-pulse" id="loading-indicator">
+                    <div class="h-6 bg-gray-200 rounded w-1/4 mb-4"></div>
+                    <div class="h-4 bg-gray-200 rounded w-full mb-2"></div>
+                    <div class="h-4 bg-gray-200 rounded w-full mb-2"></div>
+                    <div class="h-4 bg-gray-200 rounded w-5/6"></div>
+                </div>
+                <div id="fund-data" class="hidden">
+                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
+                        <div>
+                            <h2 id="fund-name" class="text-2xl font-bold text-gray-800"></h2>
+                            <p id="fund-category" class="text-gray-600"></p>
+                        </div>
+                        <div class="mt-4 md:mt-0 flex items-center">
+                            <span id="fund-nav" class="text-2xl font-bold text-indigo-600"></span>
+                            <span id="fund-change" class="ml-2 text-sm font-medium"></span>
+                            <button id="add-to-compare" class="ml-4 bg-indigo-100 text-indigo-700 px-3 py-1 rounded-md text-sm flex items-center">
+                                <i class="fas fa-balance-scale mr-1"></i> Add to Compare
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Chart Section -->
+                    <div class="mb-6">
+                        <div class="flex space-x-4 mb-4">
+                            <button class="time-period-btn active bg-indigo-100 text-indigo-600 px-3 py-1 rounded-md" data-period="1m">1M</button>
+                            <button class="time-period-btn bg-gray-100 text-gray-600 px-3 py-1 rounded-md" data-period="3m">3M</button>
+                            <button class="time-period-btn bg-gray-100 text-gray-600 px-3 py-1 rounded-md" data-period="6m">6M</button>
+                            <button class="time-period-btn bg-gray-100 text-gray-600 px-3 py-1 rounded-md" data-period="1y">1Y</button>
+                            <button class="time-period-btn bg-gray-100 text-gray-600 px-3 py-1 rounded-md" data-period="3y">3Y</button>
+                            <button class="time-period-btn bg-gray-100 text-gray-600 px-3 py-1 rounded-md" data-period="5y">5Y</button>
+                        </div>
+                        <div class="h-64 bg-white">
+                            <canvas id="nav-chart"></canvas>
+                        </div>
+                    </div>
+                    
+                    <!-- Fund Details Grid -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                        <div class="bg-gray-50 p-4 rounded-lg">
+                            <h3 class="text-gray-500 text-sm mb-1">Returns (1 Year)</h3>
+                            <p id="returns-1y" class="text-xl font-bold"></p>
+                        </div>
+                        <div class="bg-gray-50 p-4 rounded-lg">
+                            <h3 class="text-gray-500 text-sm mb-1">Returns (3 Years)</h3>
+                            <p id="returns-3y" class="text-xl font-bold"></p>
+                        </div>
+                        <div class="bg-gray-50 p-4 rounded-lg">
+                            <h3 class="text-gray-500 text-sm mb-1">Returns (5 Years)</h3>
+                            <p id="returns-5y" class="text-xl font-bold"></p>
+                        </div>
+                    </div>
+                    
+                    <!-- Additional Info -->
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <h3 class="font-medium text-gray-800 mb-2">Fund Information</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <p class="text-sm"><span class="text-gray-500">Fund House:</span> <span id="fund-house"></span></p>
+                                <p class="text-sm"><span class="text-gray-500">Scheme Type:</span> <span id="scheme-type"></span></p>
+                                <p class="text-sm"><span class="text-gray-500">Category:</span> <span id="category"></span></p>
+                            </div>
+                            <div>
+                                <p class="text-sm"><span class="text-gray-500">Launch Date:</span> <span id="launch-date"></span></p>
+                                <p class="text-sm"><span class="text-gray-500">Fund Size:</span> <span id="fund-size"></span></p>
+                                <p class="text-sm"><span class="text-gray-500">Expense Ratio:</span> <span id="expense-ratio"></span></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Compare Section -->
+        <section id="compare-section" class="mb-12 pt-4">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">Compare Mutual Funds</h2>
+            
+            <div id="compare-container" class="hidden bg-white rounded-lg shadow-md p-6 mb-8">
+                <div id="compare-funds" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
+                    <!-- Comparison cards will be added here dynamically -->
+                </div>
+                
+                <div id="compare-chart-container" class="mb-6">
+                    <div class="flex space-x-4 mb-4">
+                        <button class="compare-period-btn active bg-indigo-100 text-indigo-600 px-3 py-1 rounded-md" data-period="1m">1M</button>
+                        <button class="compare-period-btn bg-gray-100 text-gray-600 px-3 py-1 rounded-md" data-period="3m">3M</button>
+                        <button class="compare-period-btn bg-gray-100 text-gray-600 px-3 py-1 rounded-md" data-period="6m">6M</button>
+                        <button class="compare-period-btn bg-gray-100 text-gray-600 px-3 py-1 rounded-md" data-period="1y">1Y</button>
+                    </div>
+                    <div class="h-80 bg-white">
+                        <canvas id="compare-chart"></canvas>
+                    </div>
+                </div>
+                
+                <div id="compare-table-container">
+                    <h3 class="font-medium text-gray-800 mb-4">Performance Comparison</h3>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full bg-white">
+                            <thead>
+                                <tr class="bg-gray-50 text-gray-600 text-sm">
+                                    <th class="py-3 px-4 text-left">Fund Name</th>
+                                    <th class="py-3 px-4 text-right">Current NAV</th>
+                                    <th class="py-3 px-4 text-right">1 Day</th>
+                                    <th class="py-3 px-4 text-right">1 Month</th>
+                                    <th class="py-3 px-4 text-right">3 Months</th>
+                                    <th class="py-3 px-4 text-right">6 Months</th>
+                                    <th class="py-3 px-4 text-right">1 Year</th>
+                                    <th class="py-3 px-4 text-right">3 Years</th>
+                                </tr>
+                            </thead>
+                            <tbody id="compare-table-body">
+                                <!-- Table rows will be added dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <div class="mt-6 flex justify-end">
+                    <button id="clear-compare" class="bg-gray-100 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-200 transition">
+                        Clear All
+                    </button>
+                </div>
+            </div>
+            
+            <div id="compare-empty" class="bg-white rounded-lg shadow-md p-8 text-center">
+                <div class="text-gray-400 mb-4">
+                    <i class="fas fa-balance-scale text-5xl"></i>
+                </div>
+                <h3 class="text-xl font-bold text-gray-700 mb-2">No Funds to Compare</h3>
+                <p class="text-gray-600 mb-4">Add mutual funds to comparison by searching for them and clicking "Add to Compare"</p>
+            </div>
+        </section>
+
+        <!-- Featured Funds Section -->
+        <section class="mb-12">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">Top Performing Funds</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6" id="top-funds">
+                <!-- Cards will be added dynamically -->
+                <div class="bg-white rounded-lg shadow-md hover:shadow-lg transition p-5 hover-scale">
+                    <div class="flex justify-between items-center mb-4">
+                        <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded">Equity</span>
+                        <span class="text-green-600 font-medium">+18.64%</span>
+                    </div>
+                    <h3 class="font-bold text-lg mb-2">HDFC Midcap Opportunities Fund</h3>
+                    <p class="text-gray-600 text-sm mb-4">HDFC Mutual Fund</p>
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-900 font-bold">₹ 142.56</span>
+                        <button class="text-indigo-600 hover:text-indigo-800 text-sm font-medium" data-scheme-code="119551">View Details</button>
+                    </div>
+                </div>
+                <div class="bg-white rounded-lg shadow-md hover:shadow-lg transition p-5 hover-scale">
+                    <div class="flex justify-between items-center mb-4">
+                        <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">Hybrid</span>
+                        <span class="text-green-600 font-medium">+15.27%</span>
+                    </div>
+                    <h3 class="font-bold text-lg mb-2">ICICI Prudential Balanced Advantage Fund</h3>
+                    <p class="text-gray-600 text-sm mb-4">ICICI Prudential Mutual Fund</p>
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-900 font-bold">₹ 56.78</span>
+                        <button class="text-indigo-600 hover:text-indigo-800 text-sm font-medium" data-scheme-code="120123">View Details</button>
+                    </div>
+                </div>
+                <div class="bg-white rounded-lg shadow-md hover:shadow-lg transition p-5 hover-scale">
+                    <div class="flex justify-between items-center mb-4">
+                        <span class="bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded">Index</span>
+                        <span class="text-green-600 font-medium">+14.35%</span>
+                    </div>
+                    <h3 class="font-bold text-lg mb-2">SBI Nifty Index Fund</h3>
+                    <p class="text-gray-600 text-sm mb-4">SBI Mutual Fund</p>
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-900 font-bold">₹ 172.34</span>
+                        <button class="text-indigo-600 hover:text-indigo-800 text-sm font-medium" data-scheme-code="120486">View Details</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Features Section -->
+        <section class="mb-12 py-8">
+            <h2 class="text-2xl font-bold text-gray-800 mb-8 text-center">Why Choose MFAnalysis?</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div class="text-center p-6 bg-white rounded-lg shadow-md">
+                    <div class="inline-block p-3 bg-indigo-100 rounded-full mb-4">
+                        <i class="fas fa-chart-line text-indigo-600 text-2xl"></i>
+                    </div>
+                    <h3 class="text-lg font-bold text-gray-800 mb-2">Real-time Data</h3>
+                    <p class="text-gray-600">Get the latest NAV, returns, and performance metrics updated daily.</p>
+                </div>
+                <div class="text-center p-6 bg-white rounded-lg shadow-md">
+                    <div class="inline-block p-3 bg-indigo-100 rounded-full mb-4">
+                        <i class="fas fa-balance-scale text-indigo-600 text-2xl"></i>
+                    </div>
+                    <h3 class="text-lg font-bold text-gray-800 mb-2">Compare Funds</h3>
+                    <p class="text-gray-600">Side-by-side comparison of multiple funds to make informed decisions.</p>
+                </div>
+                <div class="text-center p-6 bg-white rounded-lg shadow-md">
+                    <div class="inline-block p-3 bg-indigo-100 rounded-full mb-4">
+                        <i class="fas fa-search-dollar text-indigo-600 text-2xl"></i>
+                    </div>
+                    <h3 class="text-lg font-bold text-gray-800 mb-2">Performance Analysis</h3>
+                    <p class="text-gray-600">Track performance metrics and analyze historical trends.</p>
+                </div>
+            </div>
+        </section>
+        
+        <!-- SEO Content Section -->
+        <section class="mb-12 bg-white rounded-lg shadow-md p-8">
+            <h2 class="text-2xl font-bold text-gray-800 mb-4">Understanding Mutual Fund Investments in India</h2>
+            <div class="prose max-w-none">
+                <p class="mb-4">Investing in mutual funds is one of the most popular ways to build wealth in India. These investment vehicles pool money from multiple investors to purchase securities like stocks, bonds, and other assets. Professionally managed by fund managers, mutual funds offer diversification, professional management, and liquidity to investors.</p>
+                
+                <h3 class="text-xl font-bold text-gray-800 mt-6 mb-3">Types of Mutual Funds in India</h3>
+                <p class="mb-4">The Indian mutual fund market offers various types of funds to suit different investment goals:</p>
+                <ul class="list-disc pl-6 mb-4">
+                    <li><strong>Equity Funds:</strong> Invest primarily in stocks, offering higher returns potential with higher risk.</li>
+                    <li><strong>Debt Funds:</strong> Invest in fixed-income securities like bonds and government securities, providing stable but moderate returns.</li>
+                    <li><strong>Hybrid Funds:</strong> Invest in a mix of equity and debt instruments, balancing risk and returns.</li>
+                    <li><strong>Index Funds:</strong> Passively managed funds that mirror market indices like Nifty or Sensex.</li>
+                    <li><strong>Sectoral Funds:</strong> Focus on specific sectors like technology, healthcare, or banking.</li>
+                </ul>
+                
+                <h3 class="text-xl font-bold text-gray-800 mt-6 mb-3">Key Metrics to Analyze Mutual Funds</h3>
+                <p class="mb-4">When evaluating mutual funds, consider these important metrics:</p>
+                <ul class="list-disc pl-6 mb-4">
+                    <li><strong>Net Asset Value (NAV):</strong> The per-unit market value of a fund's assets.</li>
+                    <li><strong>Expense Ratio:</strong> The annual fee charged by the fund for management and operational costs.</li>
+                    <li><strong>Historical Returns:</strong> Performance over different time periods (1-year, 3-year, 5-year).</li>
+                    <li><strong>Fund Manager Experience:</strong> The expertise and track record of the fund manager.</li>
+                    <li><strong>Risk Measures:</strong> Volatility indicators like standard deviation and beta.</li>
+                </ul>
+                
+                <h3 class="text-xl font-bold text-gray-800 mt-6 mb-3">Benefits of Comparing Mutual Funds</h3>
+                <p class="mb-4">Comparing multiple mutual funds before investing helps you:</p>
+                <ul class="list-disc pl-6 mb-4">
+                    <li>Identify funds that align with your financial goals and risk tolerance</li>
+                    <li>Understand performance patterns across different market conditions</li>
+                    <li>Evaluate cost-effectiveness through expense ratio comparison</li>
+                    <li>Assess consistency of returns across various time periods</li>
+                    <li>Make data-driven investment decisions rather than following market trends</li>
+                </ul>
+                
+                <p class="mt-6">With MFAnalysis, you can easily search, analyze, and compare mutual funds to make informed investment decisions. Our platform provides real-time data, interactive charts, and comprehensive analytics to help you navigate the complex world of mutual fund investments.</p>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white py-8">
+        <div class="container mx-auto px-4">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div>
+                    <h3 class="text-lg font-bold mb-4">MFAnalysis</h3>
+                    <p class="text-gray-400">Your platform for intelligent mutual fund analysis and comparison for smarter investment decisions.</p>
+                </div>
+                <div>
+                    <h3 class="text-lg font-bold mb-4">Quick Links</h3>
+                    <ul class="space-y-2">
+                        <li><a href="index.html" class="text-gray-400 hover:text-white transition">Home</a></li>
+                        <li><a href="#compare-section" class="text-gray-400 hover:text-white transition">Compare</a></li>
+                        <li><a href="terms-of-service.html" class="text-gray-400 hover:text-white transition">Terms of Service</a></li>
+                        <li><a href="privacy-policy.html" class="text-gray-400 hover:text-white transition">Privacy Policy</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="text-lg font-bold mb-4">Stay Connected</h3>
+                    <div class="flex space-x-4 mb-4">
+                        <a href="#" class="text-gray-400 hover:text-white transition"><i class="fab fa-twitter"></i></a>
+                        <a href="#" class="text-gray-400 hover:text-white transition"><i class="fab fa-facebook"></i></a>
+                        <a href="#" class="text-gray-400 hover:text-white transition"><i class="fab fa-linkedin"></i></a>
+                        <a href="#" class="text-gray-400 hover:text-white transition"><i class="fab fa-instagram"></i></a>
+                    </div>
+                    <p class="text-gray-400">Subscribe to our newsletter</p>
+                    <div class="mt-2 flex">
+                        <input type="email" class="bg-gray-700 rounded-l px-4 py-2 w-full focus:outline-none" placeholder="Email address">
+                        <button class="bg-indigo-600 text-white px-4 py-2 rounded-r hover:bg-indigo-700 transition">
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="border-t border-gray-700 mt-8 pt-8 text-center text-gray-400">
+                <p>© 2023 MFAnalysis. All rights reserved. Data provided by <a href="https://www.mfapi.in/" class="text-indigo-400 hover:text-indigo-300">mfapi.in</a></p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html> 
