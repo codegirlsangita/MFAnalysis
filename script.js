@@ -201,8 +201,7 @@ function displayAutocompleteResults(funds) {
         resultItem.className = 'p-3 hover:bg-gray-100 cursor-pointer border-b border-gray-100';
         resultItem.innerHTML = `
             <div class="font-medium text-gray-800">${fund.schemeName}</div>
-            <div class="text-xs text-gray-500">${fund.fundHouse}</div>
-        `;
+         `;
         
         // Add click event
         resultItem.addEventListener('click', () => {
